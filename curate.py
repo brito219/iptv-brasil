@@ -13,9 +13,12 @@ SOURCE_URLS = [
 PINNED_FILE = "essenciais.m3u"
 OUTPUT_FILE = "brasil.m3u"
 STATUS_FILE = "status.json"
-REQUEST_TIMEOUT_S = 8
-CONCURRENCY = 24
+PROBE_TIMEOUT_S = 15
+CONCURRENCY = 4
+MINIMUM_CHANNELS = 100
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+JELLYFIN_CONTAINER = "homelab-jellyfin-1"
+FFPROBE_PATH = "/usr/lib/jellyfin-ffmpeg/ffprobe"
 
 
 def download(url):
@@ -48,21 +51,22 @@ def parse_m3u(text):
     return entries
 
 
-def is_working(url):
+def is_playable(url):
+    command = [
+        "docker", "exec", JELLYFIN_CONTAINER, FFPROBE_PATH,
+        "-hide_banner", "-v", "error",
+        "-timeout", str(PROBE_TIMEOUT_S * 1_000_000),
+        "-i", url,
+        "-show_entries", "format=format_name", "-of", "csv=p=0",
+    ]
     try:
         result = subprocess.run(
-            [
-                "curl", "-sk", "-m", str(REQUEST_TIMEOUT_S), "-L", "-r", "0-65535",
-                "-o", "/dev/null", "-w", "%{http_code} %{size_download}", url,
-            ],
+            command,
             capture_output=True,
             text=True,
-            timeout=REQUEST_TIMEOUT_S + 2,
+            timeout=PROBE_TIMEOUT_S + 10,
         )
-        parts = result.stdout.strip().split()
-        code = parts[0] if parts else "ERR"
-        size = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-        return code.startswith("2") and size > 0
+        return result.returncode == 0 and bool(result.stdout.strip())
     except Exception:
         return False
 
@@ -70,7 +74,7 @@ def is_working(url):
 def test_streams(entries):
     working = []
     with ThreadPoolExecutor(max_workers=CONCURRENCY) as executor:
-        futures = {executor.submit(is_working, entry["url"]): entry for entry in entries}
+        futures = {executor.submit(is_playable, entry["url"]): entry for entry in entries}
         for future in as_completed(futures):
             if future.result():
                 working.append(futures[future])
@@ -118,6 +122,9 @@ def main():
     entries += parse_m3u(read_file(PINNED_FILE))
     entries = dedupe(entries)
     working = test_streams(entries)
+    if len(working) < MINIMUM_CHANNELS:
+        print(f"aborting: only {len(working)} working channels (minimum {MINIMUM_CHANNELS})", file=sys.stderr)
+        sys.exit(1)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
         file.write(build_m3u(working))
     write_status(len(working), len(entries))

@@ -21,7 +21,7 @@ Painel → TV ao Vivo → Sintonizadores → Adicionar → tipo **M3U** → cole
 
 ## Como funciona
 
-- `curate.py` baixa as fontes, testa cada stream, filtra os que estão funcionando e gera `brasil.m3u`.
+- `curate.py` baixa as fontes, testa cada stream com ffprobe, filtra os que tocam de verdade e gera `brasil.m3u`.
 - `essenciais.m3u` é uma lista fixa de streams oficiais de emissoras (TV Brasil, TV Cultura, afiliadas...).
 - A geração roda num cron no homelab do autor a cada 2 dias e faz push pra cá.
 
