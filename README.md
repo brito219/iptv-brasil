@@ -24,8 +24,9 @@ Painel → TV ao Vivo → Sintonizadores → Adicionar → tipo **M3U** → cole
 - `curate.py` baixa as fontes, testa cada stream com ffprobe, filtra os que tocam de verdade e gera `brasil.m3u`.
 - `essenciais.m3u` é uma lista fixa de streams oficiais de emissoras (TV Brasil, TV Cultura, afiliadas...).
 - A geração roda num cron no homelab do autor a cada 2 dias e faz push pra cá.
+- `channels.py` gera o `channels.xml` (mapa canal → fonte de grade: mi.tv, meuguia.tv...) e o [iptv-org/epg](https://github.com/iptv-org/epg) usa isso pra gerar a grade (`guide.xml`).
 
 ## Créditos e licença
 
-- Dados agregados do [iptv-org](https://github.com/iptv-org/iptv) (Unlicense) e do Pluto TV Brasil.
+- Dados agregados do [iptv-org](https://github.com/iptv-org/iptv) (Unlicense) e do Pluto TV Brasil. Grade (EPG) via [iptv-org/epg](https://github.com/iptv-org/epg).
 - Nenhum stream é hospedado aqui: os links apontam direto pra fonte pública de cada emissora.
