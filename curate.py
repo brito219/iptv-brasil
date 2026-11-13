@@ -32,22 +32,38 @@ def read_file(path):
         return file.read()
 
 
+def extract_attribute(line, key):
+    match = re.search(rf'{key}="([^"]*)"', line)
+    return match.group(1) if match else ""
+
+
 def parse_m3u(text):
     entries = []
     name = None
     group = ""
+    tvg_id = ""
+    tvg_logo = ""
     for line in text.splitlines():
         line = line.strip()
         if line.startswith("#EXTINF"):
-            match = re.search(r'group-title="([^"]*)"', line)
-            group = match.group(1) if match else ""
+            group = extract_attribute(line, "group-title")
+            tvg_id = extract_attribute(line, "tvg-id")
+            tvg_logo = extract_attribute(line, "tvg-logo")
             match = re.search(r",([^,]*)$", line)
             name = match.group(1).strip() if match else line
         elif line.startswith("http"):
             if name:
-                entries.append({"name": name, "group": group, "url": line})
+                entries.append({
+                    "name": name,
+                    "group": group,
+                    "url": line,
+                    "tvg_id": tvg_id,
+                    "tvg_logo": tvg_logo,
+                })
             name = None
             group = ""
+            tvg_id = ""
+            tvg_logo = ""
     return entries
 
 
@@ -96,8 +112,13 @@ def build_m3u(entries):
     entries = sorted(entries, key=lambda entry: (entry["group"].lower(), entry["name"].lower()))
     lines = ["#EXTM3U"]
     for entry in entries:
-        group = entry["group"] or "Canais"
-        lines.append(f'#EXTINF:-1 group-title="{group}",{entry["name"]}')
+        attributes = []
+        if entry.get("tvg_id"):
+            attributes.append(f'tvg-id="{entry["tvg_id"]}"')
+        if entry.get("tvg_logo"):
+            attributes.append(f'tvg-logo="{entry["tvg_logo"]}"')
+        attributes.append(f'group-title="{entry["group"] or "Canais"}"')
+        lines.append(f'#EXTINF:-1 {" ".join(attributes)},{entry["name"]}')
         lines.append(entry["url"])
     return "\n".join(lines) + "\n"
 
