@@ -551,6 +551,8 @@ https://cdn.live.br1.jmvstream.com/w/LVW-8719/LVW8719_AcLVAxWy5J/playlist.m3u8
 http://186.219.52.187/seculo21/index.m3u8
 #EXTINF:-1 group-title="Religious",Rede Vida (720p)
 http://46.151.196.223:14244
+#EXTINF:-1 group-title="Religious",RIT TV (1080p)
+https://acesso.ecast.site:3648/live/ritlive.m3u8
 #EXTINF:-1 group-title="Religious",TV Evangelizar (720p)
 http://170.83.16.50/TV_EVANGELIZAR/index.m3u8
 #EXTINF:-1 group-title="Religious",TV Mana Brasil (1080p)
